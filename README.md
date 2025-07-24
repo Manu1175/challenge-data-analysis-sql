@@ -88,3 +88,54 @@ FROM
   division_total AS dt
 ORDER BY 
   percentage_within_division DESC;
+
+# Average, Min and Max Age per Sub Categories in Construction:
+sql
+SELECT
+  a."NaceCode",
+  c."Description",
+  ROUND(AVG(
+    (julianday('2025-07-24') - julianday(
+      substr(e."StartDate", 7, 4) || '-' ||   -- YYYY
+      substr(e."StartDate", 4, 2) || '-' ||   -- MM
+      substr(e."StartDate", 1, 2)             -- DD
+    )) / 365.25
+  ), 2) AS avg_age_years,
+  MIN(
+    CAST(
+      (julianday('2025-07-24') - julianday(
+        substr(e."StartDate", 7, 4) || '-' ||   
+        substr(e."StartDate", 4, 2) || '-' ||   
+        substr(e."StartDate", 1, 2)             
+      )) / 365.25 AS INTEGER
+    )
+  ) AS min_age_years,
+  MAX(
+    CAST(
+      (julianday('2025-07-24') - julianday(
+        substr(e."StartDate", 7, 4) || '-' ||   
+        substr(e."StartDate", 4, 2) || '-' ||   
+        substr(e."StartDate", 1, 2)             
+      )) / 365.25 AS INTEGER
+    )
+  ) AS max_age_years
+FROM 
+  enterprise AS e
+INNER JOIN 
+  activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+INNER JOIN
+  code AS c ON a."NaceCode" = c."Code"
+WHERE 
+  a."NaceCode" LIKE '43%'
+  AND c."Category" = 'Nace2025'
+  AND c."Language" = 'FR'
+  AND e."StartDate" IS NOT NULL
+  AND length(e."StartDate") = 10
+  AND substr(e."StartDate", 3, 1) = '-'
+  AND substr(e."StartDate", 6, 1) = '-'
+  AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
+  AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
+GROUP BY
+  a."NaceCode", c."Description"
+ORDER BY
+  avg_age_years DESC;
