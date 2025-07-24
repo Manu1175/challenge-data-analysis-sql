@@ -1,60 +1,75 @@
-# challenge-data-analysis-sql
+# Enterprise Data Analysis with SQL
 
-Which percentage of companies are under which juridical form?
+This repository includes a series of SQL queries used to analyze enterprise data in Belgium using juridical form codes and NACE2025 classification.
 
-SQL Statement in enterprise joining code tables:
+---
+
+## 1. Juridical Form Distribution
+
+**Question:** *Which percentage of companies are under which juridical form?*
+
 ```sql
-SELECT 
-  e.JuridicalForm, 
-  c.Description, 
+SELECT
+  e.JuridicalForm,
+  c.Description,
   COUNT(*) AS juridical_form_count
-FROM 
+FROM
   enterprise AS e
-INNER JOIN 
-  code AS c 
-    ON e.JuridicalForm = c.Code 
-WHERE 
+INNER JOIN
+  code AS c
+    ON e.JuridicalForm = c.Code
+WHERE
   c.Category = 'JuridicalForm'
-GROUP BY 
+GROUP BY
   e.JuridicalForm, c.Description
-ORDER BY 
+ORDER BY
   juridical_form_count DESC;
+```
 
-# Showing Top to down activities in Belgium using Nace2025:
-sql
-SELECT 
+---
+
+## 2. Top Activities in Belgium (NACE2025 Divisions)
+
+**Question:** *Show top-down economic activity divisions based on number of enterprises.*
+
+```sql
+SELECT
   substr(c."Code", 1, 2) AS nace_division,
   cd."Description" AS division_description,
   COUNT(e."EnterpriseNumber") AS count_enterprises,
   ROUND(
-    100.0 * COUNT(e."EnterpriseNumber") / SUM(COUNT(e."EnterpriseNumber")) OVER (), 
+    100.0 * COUNT(e."EnterpriseNumber") / SUM(COUNT(e."EnterpriseNumber")) OVER (),
     2
   ) AS percentage
-FROM 
+FROM
   enterprise AS e
-INNER JOIN 
+INNER JOIN
   activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
-INNER JOIN 
+INNER JOIN
   code AS c ON a."NaceCode" = c."Code"
--- Second join to get description from division-level code
-LEFT JOIN 
-  code AS cd 
+LEFT JOIN
+  code AS cd
     ON substr(c."Code", 1, 2) = cd."Code"
     AND cd."Category" = 'Nace2025'
     AND cd."Language" = 'FR'
-WHERE 
+WHERE
   c."Category" = 'Nace2025'
   AND c."Language" = 'FR'
-GROUP BY 
+GROUP BY
   nace_division, division_description
-ORDER BY 
+ORDER BY
   count_enterprises DESC;
+```
 
-## In the 43 Construction category, show top down percentage sub-categories:
+---
 
-sql
+## 3. Subcategories in Construction (Division 43)
+
+**Question:** *In the 43 Construction category, show top-down percentage sub-categories.*
+
+```sql
 WITH division_total AS (
-  SELECT 
+  SELECT
     COUNT(e."EnterpriseNumber") AS total_enterprises
   FROM enterprise AS e
   INNER JOIN activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
@@ -65,7 +80,7 @@ WITH division_total AS (
 ),
 
 subcategory_counts AS (
-  SELECT 
+  SELECT
     c."Code" AS nace_code,
     c."Description",
     COUNT(e."EnterpriseNumber") AS count_enterprises
@@ -78,64 +93,185 @@ subcategory_counts AS (
   GROUP BY c."Code", c."Description"
 )
 
-SELECT 
+SELECT
   s.nace_code,
   s."Description",
   s.count_enterprises,
   ROUND(100.0 * s.count_enterprises / dt.total_enterprises, 2) AS percentage_within_division
-FROM 
+FROM
   subcategory_counts AS s,
   division_total AS dt
-ORDER BY 
+ORDER BY
   percentage_within_division DESC;
+```
 
-# Average, Min and Max Age per Sub Categories in Construction:
-sql
+---
+
+## 4. Company Age Statistics in Construction
+
+**Question:** *Average, min and max age per sub-category (in years) for NACE codes starting with '43'.*
+
+```sql
 SELECT
-  a."NaceCode",
+  sub."NaceCode",
   c."Description",
-  ROUND(AVG(
+  ROUND(AVG(sub.age), 2) AS avg_age_years,
+  MIN(CAST(sub.age AS INTEGER)) AS min_age_years,
+  MAX(CAST(sub.age AS INTEGER)) AS max_age_years
+FROM (
+  SELECT DISTINCT
+    e."EnterpriseNumber",
+    a."NaceCode",
     (julianday('2025-07-24') - julianday(
       substr(e."StartDate", 7, 4) || '-' ||   -- YYYY
       substr(e."StartDate", 4, 2) || '-' ||   -- MM
       substr(e."StartDate", 1, 2)             -- DD
-    )) / 365.25
-  ), 2) AS avg_age_years,
-  MIN(
-    CAST(
-      (julianday('2025-07-24') - julianday(
-        substr(e."StartDate", 7, 4) || '-' ||   
-        substr(e."StartDate", 4, 2) || '-' ||   
-        substr(e."StartDate", 1, 2)             
-      )) / 365.25 AS INTEGER
-    )
-  ) AS min_age_years,
-  MAX(
-    CAST(
-      (julianday('2025-07-24') - julianday(
-        substr(e."StartDate", 7, 4) || '-' ||   
-        substr(e."StartDate", 4, 2) || '-' ||   
-        substr(e."StartDate", 1, 2)             
-      )) / 365.25 AS INTEGER
-    )
-  ) AS max_age_years
-FROM 
-  enterprise AS e
-INNER JOIN 
-  activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
-INNER JOIN
-  code AS c ON a."NaceCode" = c."Code"
+    )) / 365.25 AS age
+  FROM 
+    enterprise AS e
+  INNER JOIN activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+  WHERE 
+    a."NaceCode" LIKE '43%'
+    AND e."StartDate" IS NOT NULL
+    AND length(e."StartDate") = 10
+    AND substr(e."StartDate", 3, 1) = '-'
+    AND substr(e."StartDate", 6, 1) = '-'
+    AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
+    AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
+) AS sub
+INNER JOIN code AS c ON sub."NaceCode" = c."Code"
 WHERE 
-  a."NaceCode" LIKE '43%'
-  AND c."Category" = 'Nace2025'
+  c."Category" = 'Nace2025'
   AND c."Language" = 'FR'
-  AND e."StartDate" IS NOT NULL
-  AND length(e."StartDate") = 10
-  AND substr(e."StartDate", 3, 1) = '-'
-  AND substr(e."StartDate", 6, 1) = '-'
-  AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
-  AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
 GROUP BY
-  a."NaceCode", c."Description"
+  sub."NaceCode", c."Description"
 ORDER BY
   avg_age_years DESC;
+```
+
+---
+
+## 5. Oldest companies
+
+**Question:** *10 Oldest companies for the top 5 categories in sub-categories construction.*
+
+```sql
+WITH company_ages AS (
+  SELECT DISTINCT
+    e."EnterpriseNumber",
+    d."Denomination",
+    e."StartDate",
+    a."NaceCode",
+    c."Description" AS nace_description,
+    CAST(
+      (julianday('2025-07-24') - julianday(
+        substr(e."StartDate", 7, 4) || '-' ||   -- YYYY
+        substr(e."StartDate", 4, 2) || '-' ||   -- MM
+        substr(e."StartDate", 1, 2)             -- DD
+      )) / 365.25 AS INTEGER
+    ) AS age_years
+  FROM 
+    enterprise AS e
+  INNER JOIN 
+    activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+  INNER JOIN 
+    code AS c ON a."NaceCode" = c."Code"
+  INNER JOIN 
+    denomination AS d 
+      ON e."EnterpriseNumber" = d."EntityNumber"
+     AND d."TypeOfDenomination" = 1  -- main name
+  WHERE 
+    c."Category" = 'Nace2025'
+    AND c."Language" = 'FR'
+    AND d."Language" = 1
+    AND a."NaceCode" IN (43333, 43222, 43320, 43332, 43343)
+    AND e."StartDate" IS NOT NULL
+    AND length(e."StartDate") = 10
+    AND substr(e."StartDate", 3, 1) = '-'
+    AND substr(e."StartDate", 6, 1) = '-'
+    AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
+    AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
+),
+ranked_companies AS (
+  SELECT 
+    *,
+    ROW_NUMBER() OVER (PARTITION BY "NaceCode" ORDER BY age_years DESC) AS rn
+  FROM 
+    company_ages
+)
+SELECT 
+  "NaceCode",
+  nace_description,
+  "Denomination",
+  "EnterpriseNumber",
+  "StartDate",
+  age_years
+FROM 
+  ranked_companies
+WHERE 
+  rn <= 10
+ORDER BY 
+  "NaceCode", age_years DESC;
+```
+
+---
+
+## 6. Newest companies
+
+**Question:** *10 newest companies for the top 5 categories in sub-categories construction.*
+```sql
+WITH company_ages AS (
+  SELECT DISTINCT
+    e."EnterpriseNumber",
+    d."Denomination",
+    e."StartDate",
+    a."NaceCode",
+    c."Description" AS nace_description,
+    CAST(
+      (julianday('2025-07-24') - julianday(
+        substr(e."StartDate", 7, 4) || '-' ||   -- YYYY
+        substr(e."StartDate", 4, 2) || '-' ||   -- MM
+        substr(e."StartDate", 1, 2)             -- DD
+      )) / 365.25 AS REAL
+    ) AS age_years
+  FROM 
+    enterprise AS e
+  INNER JOIN activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+  INNER JOIN code AS c ON a."NaceCode" = c."Code"
+  INNER JOIN denomination AS d 
+      ON e."EnterpriseNumber" = d."EntityNumber"
+     AND d."TypeOfDenomination" = 1
+  WHERE 
+    a."NaceCode" IN (43333, 43222, 43320, 43332, 43343)
+    AND c."Category" = 'Nace2025'
+    AND c."Language" = 'FR'
+    AND d."Language" = 1
+    AND e."StartDate" IS NOT NULL
+    AND length(e."StartDate") = 10
+    AND substr(e."StartDate", 3, 1) = '-'
+    AND substr(e."StartDate", 6, 1) = '-'
+    AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
+    AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
+),
+ranked_newest AS (
+  SELECT 
+    *,
+    ROW_NUMBER() OVER (PARTITION BY "NaceCode" ORDER BY age_years ASC) AS rn
+  FROM company_ages
+)
+SELECT 
+  "NaceCode",
+  nace_description,
+  "Denomination",
+  "EnterpriseNumber",
+  "StartDate",
+  ROUND(age_years, 2) AS age_years
+FROM 
+  ranked_newest
+WHERE 
+  rn <= 10
+ORDER BY 
+  "NaceCode", age_years ASC;
+```
+
+---
