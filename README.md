@@ -109,7 +109,7 @@ ORDER BY
 
 ## 4. Company Age Statistics in Construction
 
-**Question:** *Average, min and max age per sub-category (in years) for NACE codes starting with '43'.*
+**Question:** *Average, min, max, stdev age per sub-category (in years) for NACE codes starting with '43'.*
 
 ```sql
 SELECT
@@ -117,7 +117,8 @@ SELECT
   c."Description",
   ROUND(AVG(sub.age), 2) AS avg_age_years,
   MIN(CAST(sub.age AS INTEGER)) AS min_age_years,
-  MAX(CAST(sub.age AS INTEGER)) AS max_age_years
+  MAX(CAST(sub.age AS INTEGER)) AS max_age_years,
+  ROUND(SQRT(AVG(sub.age * sub.age) - AVG(sub.age) * AVG(sub.age)), 2) AS stddev_age_years
 FROM (
   SELECT DISTINCT
     e."EnterpriseNumber",
