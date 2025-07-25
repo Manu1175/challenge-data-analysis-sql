@@ -380,8 +380,39 @@ ORDER BY
   ```
 
 ---
+### 9. Spread Societe a Commandite
+**Question:** *How is Societe a Commandite spread accross sub-categories?*
+```sql
+SELECT 
+  nace.Code AS NaceSubCode,
+  nace.Description AS SubCategory,
+  COUNT(DISTINCT e."EnterpriseNumber") AS TotalCompanies,
+  ROUND(
+    100.0 * COUNT(DISTINCT e."EnterpriseNumber") 
+    / SUM(COUNT(DISTINCT e."EnterpriseNumber")) OVER (),
+    2
+  ) AS Percentage
+FROM 
+  enterprise AS e
+INNER JOIN 
+  activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+INNER JOIN 
+  code AS nace 
+    ON substr(CAST(a."NaceCode" AS TEXT), 1, 4) = REPLACE(nace.Code, '.', '') 
+   AND nace.Category = 'Nace2025' 
+   AND nace.Language = 'FR'
+WHERE 
+  e."JuridicalForm" IN (12, 13)
+  AND a."NaceCode" BETWEEN 43000 AND 43999
+GROUP BY 
+  nace.Code, nace.Description
+ORDER BY 
+  TotalCompanies DESC;
+  ```
 
-### 9. Geographic spread of construction companies
+---
+
+### 10. Geographic spread of construction companies
 **Question:** *Where are the main companies concentrated?*
 ```sql
   SELECT 
