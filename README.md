@@ -315,6 +315,7 @@ ORDER BY
 
 ## 8. History Juridical Form in the construction industry
 **Question:** *Last 10 years created Juridical Forms in the construction sub-sectors and it's evolution*
+```sql
  SELECT 
   CAST(SUBSTR(e."StartDate", 7, 4) AS INTEGER) AS StartYear,
   jf.Code AS JuridicalFormCode,
