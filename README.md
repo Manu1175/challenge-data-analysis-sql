@@ -187,7 +187,7 @@ ORDER BY "NaceCode";
 
 ---
 
-### 4. Oldest companies
+### 5. Oldest companies
 
 **Question:** *10 Oldest companies for the top 5 categories in sub-categories construction.*
 
@@ -252,7 +252,7 @@ ORDER BY
 
 ---
 
-### 5. Newest companies
+### 6. Newest companies
 
 **Question:** *10 newest companies for the top 5 categories in sub-categories construction.*
 ```sql
@@ -312,7 +312,7 @@ ORDER BY
 
 ---
 
-### 6. History company creation construction
+### 7. History company creation construction
 **Question:** *Last 10 years created companies in the construction sub-sectors and it's evolution*
 ```sql
 SELECT 
@@ -348,7 +348,7 @@ ORDER BY
 
 ---
 
-### 7. History Juridical Form in the construction industry
+### 8. History Juridical Form in the construction industry
 **Question:** *Last 10 years created Juridical Forms in the construction sub-sectors and it's evolution*
 ```sql
  SELECT 
@@ -377,6 +377,30 @@ GROUP BY
   StartYear, jf.Code, jf.Description
 ORDER BY 
   StartYear ASC, EnterpriseCount DESC;
+  ```
+
+---
+
+### 9. Geographic spread of construction companies
+**Question:** *Where are the main companies concentrated?*
+```sql
+  SELECT 
+  addr."Zipcode",
+  addr."MunicipalityFR",
+  COUNT(DISTINCT e."EnterpriseNumber") AS company_count
+FROM 
+  enterprise AS e
+INNER JOIN 
+  activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+INNER JOIN 
+  address AS addr ON e."EnterpriseNumber" = addr."EntityNumber"
+WHERE 
+  a."NaceCode" LIKE '43%'
+  AND addr.countryFR IS NULL
+GROUP BY 
+  addr."Zipcode", addr."MunicipalityFR"
+ORDER BY 
+  company_count DESC;
   ```
 
 ---
