@@ -276,3 +276,39 @@ ORDER BY
 ```
 
 ---
+
+## 7. History company creation construction
+**Question:** *Last 10 years created companies in the construction sub-sector and it's evolution*
+```sql
+SELECT 
+  nace.Code AS NaceCode,
+  nace.Description AS NaceDescription,
+  SUBSTR(e."StartDate", 7, 4) AS StartYear,
+  COUNT(DISTINCT e."EnterpriseNumber") AS EnterpriseCount,
+  ROUND(
+    100.0 * COUNT(DISTINCT e."EnterpriseNumber") 
+    / SUM(COUNT(DISTINCT e."EnterpriseNumber")) OVER (PARTITION BY SUBSTR(e."StartDate", 7, 4)),
+    2
+  ) AS PercentagePerYear
+FROM 
+  enterprise AS e
+INNER JOIN activity AS a 
+  ON e."EnterpriseNumber" = a."EntityNumber"
+INNER JOIN code AS nace 
+  ON a."NaceCode" = nace.Code 
+  AND nace.Category = 'Nace2025'
+  AND nace.Language = 'FR'
+WHERE 
+  a."NaceCode" LIKE '43%' AND
+  e."StartDate" IS NOT NULL AND
+  LENGTH(e."StartDate") = 10 AND
+  SUBSTR(e."StartDate", 3, 1) = '-' AND
+  SUBSTR(e."StartDate", 6, 1) = '-' AND
+  CAST(SUBSTR(e."StartDate", 7, 4) AS INTEGER) BETWEEN 2015 AND 2025
+GROUP BY 
+  nace.Code, nace.Description, StartYear
+ORDER BY 
+  StartYear, EnterpriseCount DESC;
+```
+
+---
