@@ -278,7 +278,7 @@ ORDER BY
 ---
 
 ## 7. History company creation construction
-**Question:** *Last 10 years created companies in the construction sub-sector and it's evolution*
+**Question:** *Last 10 years created companies in the construction sub-sectors and it's evolution*
 ```sql
 SELECT 
   nace.Code AS NaceCode,
@@ -312,3 +312,32 @@ ORDER BY
 ```
 
 ---
+
+## 8. History Juridical Form in the construction industry
+**Question:** *Last 10 years created Juridical Forms in the construction sub-sectors and it's evolution*
+ SELECT 
+  CAST(SUBSTR(e."StartDate", 7, 4) AS INTEGER) AS StartYear,
+  jf.Code AS JuridicalFormCode,
+  jf.Description AS JuridicalFormDescription,
+  COUNT(DISTINCT e."EnterpriseNumber") AS EnterpriseCount,
+  ROUND(
+    100.0 * COUNT(DISTINCT e."EnterpriseNumber")
+    / SUM(COUNT(DISTINCT e."EnterpriseNumber")) OVER (PARTITION BY SUBSTR(e."StartDate", 7, 4)),
+    2
+  ) AS PercentagePerYear
+FROM 
+  enterprise AS e
+INNER JOIN code AS jf 
+  ON CAST(CAST(e."JuridicalForm" AS INTEGER) AS TEXT) = jf.Code
+  AND jf.Category = 'JuridicalForm'
+  AND jf.Language = 'FR'
+WHERE 
+  e."StartDate" IS NOT NULL AND
+  LENGTH(e."StartDate") = 10 AND
+  SUBSTR(e."StartDate", 3, 1) = '-' AND
+  SUBSTR(e."StartDate", 6, 1) = '-' AND
+  CAST(SUBSTR(e."StartDate", 7, 4) AS INTEGER) BETWEEN 2015 AND 2025
+GROUP BY 
+  StartYear, jf.Code, jf.Description
+ORDER BY 
+  StartYear ASC, EnterpriseCount DESC;
