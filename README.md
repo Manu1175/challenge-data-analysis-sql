@@ -1,34 +1,10 @@
-# Enterprise Data Analysis with SQL
+# Enterprise Data Analysis with SQL in Construction
 
-This repository includes a series of SQL queries used to analyze enterprise data in Belgium using juridical form codes and NACE2025 classification.
-
----
-
-## 1. Juridical Form Distribution
-
-**Question:** *Which percentage of companies are under which juridical form?*
-
-```sql
-SELECT
-  e.JuridicalForm,
-  c.Description,
-  COUNT(*) AS juridical_form_count
-FROM
-  enterprise AS e
-INNER JOIN
-  code AS c
-    ON e.JuridicalForm = c.Code
-WHERE
-  c.Category = 'JuridicalForm'
-GROUP BY
-  e.JuridicalForm, c.Description
-ORDER BY
-  juridical_form_count DESC;
-```
+This repository includes a series of SQL queries used to analyze Trends in the Construction Industry.
 
 ---
 
-## 2. Top Activities in Belgium (NACE2025 Divisions)
+## 1. Top Activities in Belgium (NACE2025 Divisions)
 
 **Question:** *Show top-down economic activity divisions based on number of enterprises.*
 
@@ -63,7 +39,7 @@ ORDER BY
 
 ---
 
-## 3. Subcategories in Construction (Division 43)
+## 2. Subcategories in Construction (Division 43)
 
 **Question:** *In the 43 Construction category, show top-down percentage sub-categories.*
 
@@ -107,7 +83,7 @@ ORDER BY
 
 ---
 
-## 4. Company Age Statistics in Construction
+## 3. Company Age Statistics in Construction
 
 **Question:** *Average, min, max, stdev age per sub-category (in years) for NACE codes starting with '43'.*
 
@@ -116,8 +92,6 @@ SELECT
   sub."NaceCode",
   c."Description",
   ROUND(AVG(sub.age), 2) AS avg_age_years,
-  MIN(CAST(sub.age AS INTEGER)) AS min_age_years,
-  MAX(CAST(sub.age AS INTEGER)) AS max_age_years,
   ROUND(SQRT(AVG(sub.age * sub.age) - AVG(sub.age) * AVG(sub.age)), 2) AS stddev_age_years
 FROM (
   SELECT DISTINCT
@@ -152,7 +126,7 @@ ORDER BY
 
 ---
 
-## 5. Oldest companies
+## 4. Oldest companies
 
 **Question:** *10 Oldest companies for the top 5 categories in sub-categories construction.*
 
@@ -217,7 +191,7 @@ ORDER BY
 
 ---
 
-## 6. Newest companies
+## 5. Newest companies
 
 **Question:** *10 newest companies for the top 5 categories in sub-categories construction.*
 ```sql
@@ -277,7 +251,7 @@ ORDER BY
 
 ---
 
-## 7. History company creation construction
+## 6. History company creation construction
 **Question:** *Last 10 years created companies in the construction sub-sectors and it's evolution*
 ```sql
 SELECT 
@@ -313,7 +287,7 @@ ORDER BY
 
 ---
 
-## 8. History Juridical Form in the construction industry
+## 7. History Juridical Form in the construction industry
 **Question:** *Last 10 years created Juridical Forms in the construction sub-sectors and it's evolution*
 ```sql
  SELECT 
