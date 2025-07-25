@@ -128,6 +128,65 @@ ORDER BY
 
 ---
 
+### 4. Aging Balance Top 5 Sub-Categories
+**Question:** *How is the age spread in the top 5 sub-categories.*
+
+```sql
+WITH company_ages AS (
+  SELECT DISTINCT
+    e."EnterpriseNumber",
+    d."Denomination",
+    e."StartDate",
+    a."NaceCode",
+    c."Description" AS nace_description,
+    CAST(
+      (julianday('2025-07-24') - julianday(
+        substr(e."StartDate", 7, 4) || '-' ||
+        substr(e."StartDate", 4, 2) || '-' ||
+        substr(e."StartDate", 1, 2)
+      )) / 365.25 AS INTEGER
+    ) AS age_years
+  FROM 
+    enterprise AS e
+  INNER JOIN activity AS a ON e."EnterpriseNumber" = a."EntityNumber"
+  INNER JOIN code AS c ON a."NaceCode" = c."Code"
+  INNER JOIN denomination AS d 
+    ON e."EnterpriseNumber" = d."EntityNumber"
+    AND d."TypeOfDenomination" = 1
+  WHERE 
+    c."Category" = 'Nace2025'
+    AND c."Language" = 'FR'
+    AND d."Language" = 1
+    AND a."NaceCode" IN (43333, 43222, 43320, 43332, 43343)
+    AND e."StartDate" IS NOT NULL
+    AND length(e."StartDate") = 10
+    AND substr(e."StartDate", 3, 1) = '-'
+    AND substr(e."StartDate", 6, 1) = '-'
+    AND CAST(substr(e."StartDate", 1, 2) AS INTEGER) BETWEEN 1 AND 31
+    AND CAST(substr(e."StartDate", 4, 2) AS INTEGER) BETWEEN 1 AND 12
+)
+
+SELECT
+  "NaceCode",
+  nace_description,
+  COUNT(*) AS total_companies,
+
+  COUNT(CASE WHEN age_years > 20 THEN 1 END) AS older_than_20_years,
+  ROUND(100.0 * COUNT(CASE WHEN age_years > 20 THEN 1 END) / COUNT(*), 2) AS pct_older_than_20,
+
+  COUNT(CASE WHEN age_years BETWEEN 10 AND 20 THEN 1 END) AS between_10_and_20_years,
+  ROUND(100.0 * COUNT(CASE WHEN age_years BETWEEN 10 AND 20 THEN 1 END) / COUNT(*), 2) AS pct_between_10_and_20,
+
+  COUNT(CASE WHEN age_years < 10 THEN 1 END) AS between_0_and_10_years,
+  ROUND(100.0 * COUNT(CASE WHEN age_years < 10 THEN 1 END) / COUNT(*), 2) AS pct_between_0_and_10
+
+FROM company_ages
+GROUP BY "NaceCode", nace_description
+ORDER BY "NaceCode";
+```
+
+---
+
 ### 4. Oldest companies
 
 **Question:** *10 Oldest companies for the top 5 categories in sub-categories construction.*
