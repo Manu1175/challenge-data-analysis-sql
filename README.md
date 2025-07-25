@@ -1,10 +1,10 @@
-# Enterprise Data Analysis with SQL in Construction
+## Enterprise Data Analysis with SQL in Construction
 
 This repository includes a series of SQL queries used to analyze Trends in the Construction Industry.
 
 ---
 
-## 1. Top Activities in Belgium (NACE2025 Divisions)
+### 1. Top Activities in Belgium (NACE2025 Divisions)
 
 **Question:** *Show top-down economic activity divisions based on number of enterprises.*
 
@@ -39,7 +39,7 @@ ORDER BY
 
 ---
 
-## 2. Subcategories in Construction (Division 43)
+### 2. Subcategories in Construction (Division 43)
 
 **Question:** *In the 43 Construction category, show top-down percentage sub-categories.*
 
@@ -83,7 +83,7 @@ ORDER BY
 
 ---
 
-## 3. Company Age Statistics in Construction
+### 3. Company Age Statistics in Construction
 
 **Question:** *Average, min, max, stdev age per sub-category (in years) for NACE codes starting with '43'.*
 
@@ -126,7 +126,7 @@ ORDER BY
 
 ---
 
-## 4. Oldest companies
+### 4. Oldest companies
 
 **Question:** *10 Oldest companies for the top 5 categories in sub-categories construction.*
 
@@ -191,7 +191,7 @@ ORDER BY
 
 ---
 
-## 5. Newest companies
+### 5. Newest companies
 
 **Question:** *10 newest companies for the top 5 categories in sub-categories construction.*
 ```sql
@@ -251,7 +251,7 @@ ORDER BY
 
 ---
 
-## 6. History company creation construction
+### 6. History company creation construction
 **Question:** *Last 10 years created companies in the construction sub-sectors and it's evolution*
 ```sql
 SELECT 
@@ -287,7 +287,7 @@ ORDER BY
 
 ---
 
-## 7. History Juridical Form in the construction industry
+### 7. History Juridical Form in the construction industry
 **Question:** *Last 10 years created Juridical Forms in the construction sub-sectors and it's evolution*
 ```sql
  SELECT 
